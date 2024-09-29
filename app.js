@@ -69,9 +69,10 @@ app.post('/save', (req, res) => {
 
 // Handle review submission and save it to reviews.csv
 app.post('/submit-review', (req, res) => {
-    const name = req.body.name;
-    const review = req.body.review;
-    const rating = req.body.rating;
+    const name = req.body.get('name');
+    const review = req.body.get('review');
+    const rating = req.body.get('rating');
+    
     const date = new Date().toISOString().split('T')[0]; // e.g., 2024-09-29
 
     if (!name || !review || !rating) {
