@@ -4,7 +4,11 @@ const fs = require('fs');
 const path = require('path');
 const csvWriter = require('csv-writer').createObjectCsvWriter;
 const moment = require('moment'); // Use moment for timestamp formatting
+// Add this line to require multer
+const multer = require('multer');
 
+// Set up multer to handle form data
+const upload = multer();
 const app = express();
 const PORT = 3000;
 
@@ -68,11 +72,10 @@ app.post('/save', (req, res) => {
 });
 
 // Handle review submission and save it to reviews.csv
-app.post('/submit-review', (req, res) => {
-    const name = req.body.get('name');
-    const review = req.body.get('review');
-    const rating = req.body.get('rating');
-    
+app.post('/submit-review', upload.none(), (req, res) => {
+    const name = req.body.name;
+    const review = req.body.review;
+    const rating = req.body.rating;
     const date = new Date().toISOString().split('T')[0]; // e.g., 2024-09-29
 
     if (!name || !review || !rating) {
