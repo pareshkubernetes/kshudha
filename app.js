@@ -69,18 +69,25 @@ app.post('/save', (req, res) => {
 
 // Handle review submission and save it to reviews.csv
 app.post('/submit-review', (req, res) => {
-    const { name, review, rating } = req.body;
-    const date = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
+    const name = req.body.name;
+    const review = req.body.review;
+    const rating = req.body.rating;
+    const date = new Date().toISOString().split('T')[0]; // e.g., 2024-09-29
+
+    if (!name || !review || !rating) {
+        return res.status(400).json({ message: 'Invalid input' });
+    }
+
+    // Create the CSV line
     const csvLine = `${name},${review},${rating},${date}\n`;
 
-    // Append the review to the CSV file
+    // Append to the CSV file
     fs.appendFile(path.join(__dirname, 'data/reviews.csv'), csvLine, (err) => {
         if (err) {
-            return res.status(500).json({ message: 'Error saving the review.' });
+            return res.status(500).send('Error saving the review.');
         }
         res.json({ message: 'Thank you for your review!' });
     });
-    
 });
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
