@@ -9,6 +9,7 @@ const PORT = 3000;
 
 // Middleware
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true })); // For handling form submissions
 
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
@@ -20,6 +21,13 @@ app.get('/', (req, res) => {
 
 // CSV Writer Setup
 const csvFilePath = path.join(__dirname, 'data/kshudha-case-data.csv');
+
+// Create the 'data' directory if it doesn't exist
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+    fs.mkdirSync(path.join(__dirname, 'data'));
+}
+
+// CSV writer with headers
 const writer = csvWriter({
     path: csvFilePath,
     header: [
@@ -31,9 +39,9 @@ const writer = csvWriter({
     append: true
 });
 
-// Create CSV file if it doesn't exist
-if (!fs.existsSync(csvFilePath)) {
-    fs.writeFileSync(csvFilePath, '');
+// Check if CSV file exists and is empty, if so write headers
+if (!fs.existsSync(csvFilePath) || fs.readFileSync(csvFilePath, 'utf8').length === 0) {
+    fs.writeFileSync(csvFilePath, 'Name,Email,Phone,Address\n'); // Writing headers
 }
 
 // Route to save form data
