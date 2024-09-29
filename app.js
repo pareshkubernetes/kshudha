@@ -76,10 +76,11 @@ app.post('/submit-review', (req, res) => {
     // Append the review to the CSV file
     fs.appendFile(path.join(__dirname, 'data/reviews.csv'), csvLine, (err) => {
         if (err) {
-            return res.status(500).send('Error saving the review.');
+            return res.status(500).json({ message: 'Error saving the review.' });
         }
-        res.send('<h2>Thank you for your review!</h2><a href="/">Go back to Home</a>');
+        res.json({ message: 'Thank you for your review!' });
     });
+    
 });
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
