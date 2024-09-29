@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const csvWriter = require('csv-writer').createObjectCsvWriter;
+const moment = require('moment'); // Use moment for timestamp formatting
 
 const app = express();
 const PORT = 3000;
@@ -34,14 +35,15 @@ const writer = csvWriter({
         { id: 'name', title: 'Name' },
         { id: 'email', title: 'Email' },
         { id: 'phone', title: 'Phone' },
-        { id: 'address', title: 'Address' }
+        { id: 'address', title: 'Address' },
+        { id: 'timestamp', title: 'Timestamp' }
     ],
     append: true
 });
 
 // Check if CSV file exists and is empty, if so write headers
 if (!fs.existsSync(csvFilePath) || fs.readFileSync(csvFilePath, 'utf8').length === 0) {
-    fs.writeFileSync(csvFilePath, 'Name,Email,Phone,Address\n'); // Writing headers
+    fs.writeFileSync(csvFilePath, 'Name,Email,Phone,Address,Timestamp\n'); // Writing headers
 }
 
 // Route to save form data
@@ -52,7 +54,10 @@ app.post('/save', (req, res) => {
         return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    writer.writeRecords([{ name, email, phone, address }])
+    // Generate timestamp in DD/MM/YY-HH:MM format
+    const timestamp = moment().format('DD/MM/YY-HH:mm');
+
+    writer.writeRecords([{ name, email, phone, address, timestamp }])
         .then(() => {
             res.status(200).json({ message: 'Data saved successfully!' });
         })
