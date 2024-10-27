@@ -50,6 +50,10 @@ if (!fs.existsSync(csvFilePath) || fs.readFileSync(csvFilePath, 'utf8').length =
     fs.writeFileSync(csvFilePath, 'Name,Email,Phone,Address,Timestamp\n'); // Writing headers
 }
 
+// Add route for the gallery page
+app.get('/gallery', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'gallery.html'));
+});
 // Route to save form data
 app.post('/save', (req, res) => {
     const { name, email, phone, address } = req.body;
