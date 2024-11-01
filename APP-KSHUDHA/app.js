@@ -95,8 +95,22 @@ app.post('/submit-review', (req, res) => {
     const { name, review, rating } = req.body;
     const date = moment().format('YYYY-MM-DD');
 
+    // Validate that rating is a decimal number between 1 and 5
+    const parsedRating = parseFloat(rating);
+    if (isNaN(parsedRating) || parsedRating < 1 || parsedRating > 5) {
+        return res.status(400).json({ error: 'Rating must be a number between 1 and 5' });
+    }
+
+    // Manually format the review entry with a semicolon at the end and newline
+    const newEntry = `${name};${review};${rating};${date};\n`;
+
+    console.log(' NEW = ', newEntry)
+        // Define the CSV header row
+        const headers = "Name;Review;Rating;Date;\n";
+    const filePath = path.join(__dirname, 'data/reviews.csv');
+    console.log(' FILE =', filePath)
     const writer = csvWriter({
-        path: path.join(__dirname, 'data/reviews.csv'),
+        path: filePath,
         header: [
             { id: 'Name', title: 'Name' },
             { id: 'Review', title: 'Review' },
@@ -107,9 +121,27 @@ app.post('/submit-review', (req, res) => {
         fieldDelimiter: ';'  // Use semicolon as a field delimiter
     });
 
-    writer.writeRecords([{ Name: name, Review: review, Rating: rating, Date: date }])
-        .then(() => res.status(201).json({ message: 'Review submitted successfully' }))
-        .catch(error => res.status(500).json({ error: 'Error writing review' }));
+    // Read the current file content
+    fs.readFile(filePath, 'utf8', (err, existingData) => {
+        if (err && err.code !== 'ENOENT') {
+            console.error("Error reading reviews:", err);
+            return res.status(500).json({ error: 'Error reading review data' });
+        };
+    // Check if the headers already exist in the file
+    const hasHeaders = existingData && existingData.startsWith(headers);
+        // Build the updated data
+        const updatedData = hasHeaders
+            ? headers + newEntry + existingData.slice(headers.length)  // Keep existing header, prepend new entry
+            : headers + newEntry + (existingData || '');               // Add header if missing, prepend new entry
+        // Write the updated data back to the file
+        fs.writeFile(filePath, updatedData, (writeErr) => {
+            if (writeErr) {
+                console.error("Error writing review:", writeErr);
+                return res.status(500).json({ error: 'Error writing review' });
+            }
+            res.status(201).json({ message: 'Review submitted successfully' });
+        });
+    });
 });
 
 // Start the server
