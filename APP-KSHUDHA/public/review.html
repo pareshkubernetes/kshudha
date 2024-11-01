@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reviews - Kshudha Catering</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Black background for entire page */
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Main container for centering content */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        /* Custom styles for review form */
+        #review-form {
+            background-color: #111;
+            color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        #review-form input,
+        #review-form textarea,
+        #review-form button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+
+        #review-form button {
+            background-color: #444;
+            cursor: pointer;
+        }
+
+        #review-form button:hover {
+            background-color: #666;
+        }
+
+        /* Reviews section styling */
+        #reviews {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .review-item {
+            border-bottom: 1px solid #555;
+            padding: 15px 0;
+        }
+
+        .review-item h3,
+        .review-item p {
+            margin: 5px 0;
+        }
+
+        /* Responsive design adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Customer Reviews</h1>
+        <a href="/" style="color: #00f; text-decoration: underline; margin-bottom: 20px;">Back to Main Page</a>
+        <button onclick="toggleReviewForm()">Leave a Review</button>
+
+        <!-- Review Form (Hidden by default) -->
+        <div id="review-form" style="display: none;">
+            <h2>Leave a Review</h2>
+            <form id="submitReview">
+                <input type="text" name="name" placeholder="Your Name" required><br>
+                <textarea name="review" placeholder="Your Review" required></textarea><br>
+                <label>Rating:</label>
+                <input type="number" name="rating" min="1" max="5" required><br>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+
+        <!-- Reviews Section -->
+        <section id="reviews">
+            <h2>Previous Reviews</h2>
+            <div id="reviews-list"></div>
+        </section>
+    </div>
+
+    <script>
+        function toggleReviewForm() {
+            const form = document.getElementById('review-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function loadReviews() {
+            const response = await fetch('/reviews');
+            const reviews = await response.json();
+            const reviewsList = document.getElementById('reviews-list');
+            reviewsList.innerHTML = ''; // Clear existing reviews
+
+            reviews.forEach(review => {
+                const reviewItem = document.createElement('div');
+                reviewItem.classList.add('review-item');
+                reviewItem.innerHTML = `
+            <h3>${review.Name}</h3>
+            <p><strong>Rating:</strong> ${review.Rating} / 5</p>
+            <p><strong>Review:</strong> ${review.Review}</p>
+            <p><strong>Review Date:</strong> ${review.Date}</p>
+        `;
+                reviewsList.appendChild(reviewItem);
+            });
+        }
+
+
+        document.getElementById('submitReview').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            await fetch('/submit-review', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            toggleReviewForm();
+            loadReviews();
+        });
+
+        document.addEventListener('DOMContentLoaded', loadReviews);
+    </script>
+</body>
+
+</html>

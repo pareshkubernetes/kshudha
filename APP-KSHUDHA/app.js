@@ -6,6 +6,7 @@ const csvWriter = require('csv-writer').createObjectCsvWriter;
 const moment = require('moment'); // Use moment for timestamp formatting
 // Add this line to require multer
 const multer = require('multer');
+const csv = require('csv-parser');
 
 // Set up multer to handle form data
 const upload = multer();
@@ -75,28 +76,42 @@ app.post('/save', (req, res) => {
         });
 });
 
-// Handle review submission and save it to reviews.csv
-app.post('/submit-review', upload.none(), (req, res) => {
-    const name = req.body.name;
-    const review = req.body.review;
-    const rating = req.body.rating;
-    const date = new Date().toISOString().split('T')[0]; // e.g., 2024-09-29
-
-    if (!name || !review || !rating) {
-        return res.status(400).json({ message: 'Invalid input' });
-    }
-
-    // Create the CSV line
-    const csvLine = `${name},${review},${rating},${date}\n`;
-
-    // Append to the CSV file
-    fs.appendFile(path.join(__dirname, 'data/reviews.csv'), csvLine, (err) => {
-        if (err) {
-            return res.status(500).send('Error saving the review.');
-        }
-        res.json({ message: 'Thank you for your review!' });
-    });
+// Serve review.html (Review Page)
+app.get('/review', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'review.html'));
 });
+
+// Fetch reviews
+app.get('/reviews', (req, res) => {
+    const reviews = [];
+    fs.createReadStream(path.join(__dirname, 'data', 'reviews.csv'))
+        .pipe(csv({ separator: ';' }))  // Set separator to semicolon
+        .on('data', (row) => reviews.push(row))
+        .on('end', () => res.json(reviews));
+});
+
+// Submit review
+app.post('/submit-review', (req, res) => {
+    const { name, review, rating } = req.body;
+    const date = moment().format('YYYY-MM-DD');
+
+    const writer = csvWriter({
+        path: path.join(__dirname, 'data/reviews.csv'),
+        header: [
+            { id: 'Name', title: 'Name' },
+            { id: 'Review', title: 'Review' },
+            { id: 'Rating', title: 'Rating' },
+            { id: 'Date', title: 'Date' }
+        ],
+        append: true,
+        fieldDelimiter: ';'  // Use semicolon as a field delimiter
+    });
+
+    writer.writeRecords([{ Name: name, Review: review, Rating: rating, Date: date }])
+        .then(() => res.status(201).json({ message: 'Review submitted successfully' }))
+        .catch(error => res.status(500).json({ error: 'Error writing review' }));
+});
+
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on http://localhost:${PORT}`);
